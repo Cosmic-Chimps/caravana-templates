@@ -1,0 +1,29 @@
+name: ci
+
+# Every pull request and every push to main renders each template with its example inputs through
+# Caravana's own Compose and job translators. A refusal, or a warning, fails the build.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # The Caravana version whose translators check the templates. `template check` is new in feature 035
+  # and has no release yet, so this follows main; pin a release tag (v0.x.y) once one has the command.
+  CARAVANA_REF: main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - name: Check every template
+        run: go run github.com/cosmic-chimps/caravana/cmd/caravana@${CARAVANA_REF} template check .
+      - name: Shellcheck the lab script
+        run: shellcheck lab/install-all.sh
