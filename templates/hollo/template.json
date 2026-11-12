@@ -7,7 +7,6 @@
   "upstream": "https://github.com/fedify-dev/hollo",
   "appName": "hollo",
   "notes": "Open https://{{domain}}/setup first, to create your account (the first visit is the owner's). Your handle will be @you@{{domain}}; it can't change after you federate. Hollo may restart once or twice while Postgres starts: that is normal. Postgres is backed up every day at 03:00 UTC, keeping 14.",
-  "requires": "0.20.0",
   "inputs": [
     {"name": "domain", "label": "Domain", "type": "domain",
      "help": "Its DNS must point at this server. It becomes part of your handle.", "example": "social.example.com"}

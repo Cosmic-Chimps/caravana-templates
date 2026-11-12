@@ -7,7 +7,6 @@
   "upstream": "https://www.postgresql.org/",
   "appName": "postgres",
   "notes": "Adminer is at https://{{domain}}, behind Team only: its user name is team, and its password is shown once after Create. To log into the database from Adminer choose System PostgreSQL, Server postgres, Username app, Database app, and the password you typed. Other apps can't reach this database by name: services find each other only inside one app. To use it from your own services, add them to this app's Compose file (Configure, Compose). Backups run every day at 03:00 UTC.",
-  "requires": "0.20.0",
   "inputs": [
     {"name": "domain", "label": "Adminer domain", "type": "domain",
      "help": "Where Adminer is served. Its DNS must point at this server.", "example": "db.example.com"},

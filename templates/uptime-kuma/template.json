@@ -7,7 +7,6 @@
   "upstream": "https://github.com/louislam/uptime-kuma",
   "appName": "uptime-kuma",
   "notes": "Open https://{{domain}} and create the admin account: the first visitor becomes the admin, so do it now. Everything it keeps is on one volume, which Caravana backs up every day at 03:00 UTC.",
-  "requires": "0.20.0",
   "inputs": [
     {"name": "domain", "label": "Domain", "type": "domain",
      "help": "Its DNS must point at this server.", "example": "status.example.com"}

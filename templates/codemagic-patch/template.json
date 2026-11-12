@@ -7,7 +7,6 @@
   "upstream": "https://patch.codemagic.io/docs/",
   "appName": "codemagic-patch",
   "notes": "Before you install: Codemagic publishes no server image, so build one from the release tag into a private registry (Caravana's deploy/examples/codemagic-patch/RUNBOOK.md has a workflow for it) and add the registry's login in Settings, Registries. Make two R2 buckets (public one with the files domain {{files_domain}} as its custom domain, and a private one), an R2 API token for both, and a GitHub OAuth app whose homepage is https://{{domain}}. Then sign in at https://{{domain}} with the admin email. Both addresses are written into your apps' builds, so choose them once. Postgres is backed up every day at 03:00 UTC, keeping 14.",
-  "requires": "0.20.0",
   "lab": false,
   "inputs": [
     {"name": "image", "label": "Server image", "type": "text",
