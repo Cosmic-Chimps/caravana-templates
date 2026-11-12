@@ -1,0 +1,7 @@
+# Adminer (https://www.adminer.org): a web page to look into a database (PostgreSQL, MySQL,
+# SQLite and others) that is reachable by address. It is behind Team only.
+services:
+  adminer:
+    image: adminer:5.5.1
+    expose: ["8080"]
+    mem_limit: 256m

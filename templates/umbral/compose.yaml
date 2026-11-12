@@ -1,0 +1,16 @@
+# Umbral (https://github.com/Cosmic-Chimps/umbral): a self-hosted OpenID Connect provider that
+# signs people in without passwords. One container with an embedded SQLite database. Everything it
+# keeps (the database, signing keys, the Data Protection key ring) is in /data, on the volume.
+# 10.99.0.1 is Traefik's address on a Caravana host: Umbral believes X-Forwarded-* from it only.
+services:
+  umbral:
+    image: ghcr.io/cosmic-chimps/umbral:0.10.0
+    expose: ["8080"]
+    environment:
+      UMBRAL__PUBLIC_ORIGIN: "https://{{domain}}"
+      UMBRAL__TRUSTED_PROXIES: 10.99.0.1
+    volumes:
+      - umbral-data:/data
+
+volumes:
+  umbral-data: {}

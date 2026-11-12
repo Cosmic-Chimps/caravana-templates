@@ -1,0 +1,22 @@
+{
+  "name": "umbral",
+  "title": "Umbral",
+  "version": "0.10.0-1",
+  "description": "An OpenID Connect provider that signs people in with social accounts or passkeys, no passwords.",
+  "tags": ["auth", "identity"],
+  "upstream": "https://github.com/Cosmic-Chimps/umbral",
+  "appName": "umbral",
+  "notes": "The domain is part of every callback address you register with a sign-in provider, so choose it once. On its first start Umbral writes a one-time claim code to its log (look for the box that says \"not configured yet\"): open the app's Logs, then https://{{domain}} and claim the instance. Everything it keeps is on one volume, which Caravana backs up every day at 03:00 UTC (the volume is the key ring: without it every secret is lost).",
+  "requires": "0.20.0",
+  "inputs": [
+    {"name": "domain", "label": "Domain", "type": "domain",
+     "help": "Its DNS must point at this server. It must be the exact address people use.", "example": "auth.example.com"}
+  ],
+  "services": {
+    "umbral": {
+      "domains": [{"host": "{{domain}}", "port": 8080}],
+      "health": {"path": "/healthz"},
+      "backup": {"engine": "volume"}
+    }
+  }
+}
