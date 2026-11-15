@@ -11,8 +11,8 @@ permissions:
   contents: write
 
 env:
-  # As in ci.yml: follows main until a Caravana release has `template bundle`; then pin its tag.
-  CARAVANA_REF: main
+  # As in ci.yml: the Caravana release whose `template` command checks and bundles the catalog.
+  CARAVANA_REF: v0.21.0
 
 jobs:
   release:

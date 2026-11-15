@@ -11,9 +11,9 @@ permissions:
   contents: read
 
 env:
-  # The Caravana version whose translators check the templates. `template check` is new in feature 035
-  # and has no release yet, so this follows main; pin a release tag (v0.x.y) once one has the command.
-  CARAVANA_REF: main
+  # The Caravana release whose translators check the templates (`template check`, since v0.21.0).
+  # Raise it when a template needs a newer Caravana.
+  CARAVANA_REF: v0.21.0
 
 jobs:
   check:
