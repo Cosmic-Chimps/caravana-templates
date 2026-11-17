@@ -1,0 +1,84 @@
+# PeerTube (https://joinpeertube.org): video hosting that federates with the fediverse. Three services:
+# PeerTube, Postgres and Redis. Videos go to S3-compatible object storage (Cloudflare R2, or any other),
+# so PeerTube's data volume keeps only thumbnails, avatars, captions' sources, plugins, logs and
+# transcoding's temporary files. PeerTube's own Compose file also has nginx, certbot and postfix: here
+# Caravana's Traefik serves HTTPS, and email is added after install (see the notes). Live streaming
+# (RTMP on port 1935) isn't set up. No secret is in this file: they are the services' secrets (template.json).
+services:
+  peertube:
+    image: chocobozzz/peertube:v8.3.2-trixie
+    expose: ["9000"]
+    # PeerTube itself needs about 500 MB; transcoding (ffmpeg) takes much more while it runs.
+    mem_reservation: 768m
+    mem_limit: 3072m
+    environment:
+      # Permanent: every video's and account's address (and federation) is tied to it.
+      PEERTUBE_WEBSERVER_HOSTNAME: "{{domain}}"
+      PEERTUBE_WEBSERVER_PORT: "443"
+      PEERTUBE_WEBSERVER_HTTPS: "true"
+      # Traefik reaches the copy from the private network: trust its X-Forwarded-For.
+      PEERTUBE_TRUST_PROXY: '["loopback", "linklocal", "uniquelocal"]'
+      PEERTUBE_DB_HOSTNAME: postgres
+      PEERTUBE_DB_PORT: "5432"
+      PEERTUBE_DB_NAME: peertube
+      PEERTUBE_DB_USERNAME: peertube
+      PEERTUBE_DB_SSL: "false"
+      PEERTUBE_REDIS_HOSTNAME: redis
+      PEERTUBE_REDIS_PORT: "6379"
+      # The root account's email.
+      PEERTUBE_ADMIN_EMAIL: "{{admin_email}}"
+      PEERTUBE_SMTP_FROM: "noreply@{{domain}}"
+      # Closed until email is set up (sign-ups need it to verify addresses).
+      PEERTUBE_SIGNUP_ENABLED: "false"
+      # Object storage. Path-style requests work with R2, MinIO and most others; the public URL replaces
+      # the endpoint and bucket in every video address. The image sets no ACL (R2 has none): the public
+      # bucket is public as a whole, and private videos are served through PeerTube.
+      PEERTUBE_OBJECT_STORAGE_ENABLED: "true"
+      PEERTUBE_OBJECT_STORAGE_ENDPOINT: "{{s3_endpoint}}"
+      PEERTUBE_OBJECT_STORAGE_REGION: "{{s3_region}}"
+      PEERTUBE_OBJECT_STORAGE_FORCE_PATH_STYLE: "true"
+      PEERTUBE_OBJECT_STORAGE_STREAMING_PLAYLISTS_BUCKET_NAME: "{{bucket}}"
+      PEERTUBE_OBJECT_STORAGE_STREAMING_PLAYLISTS_PREFIX: streaming-playlists/
+      PEERTUBE_OBJECT_STORAGE_STREAMING_PLAYLISTS_BASE_URL: "{{files_url}}"
+      PEERTUBE_OBJECT_STORAGE_WEB_VIDEOS_BUCKET_NAME: "{{bucket}}"
+      PEERTUBE_OBJECT_STORAGE_WEB_VIDEOS_PREFIX: web-videos/
+      PEERTUBE_OBJECT_STORAGE_WEB_VIDEOS_BASE_URL: "{{files_url}}"
+      PEERTUBE_OBJECT_STORAGE_CAPTIONS_BUCKET_NAME: "{{bucket}}"
+      PEERTUBE_OBJECT_STORAGE_CAPTIONS_PREFIX: captions/
+      PEERTUBE_OBJECT_STORAGE_CAPTIONS_BASE_URL: "{{files_url}}"
+      # Never public: users' exports, and the original files when the admin chooses to keep them.
+      PEERTUBE_OBJECT_STORAGE_USER_EXPORTS_BUCKET_NAME: "{{private_bucket}}"
+      PEERTUBE_OBJECT_STORAGE_USER_EXPORTS_PREFIX: user-exports/
+      PEERTUBE_OBJECT_STORAGE_ORIGINAL_VIDEO_FILES_BUCKET_NAME: "{{private_bucket}}"
+      PEERTUBE_OBJECT_STORAGE_ORIGINAL_VIDEO_FILES_PREFIX: original-video-files/
+    volumes:
+      - peertube-data:/data
+      # Holds local-production.json: what the admin changes in Administration, Configuration.
+      - peertube-config:/config
+
+  postgres:
+    # The major PeerTube's own Compose file names. Moving to a later major needs a dump and restore.
+    image: postgres:17-alpine
+    expose: ["5432"]
+    mem_limit: 1024m
+    environment:
+      POSTGRES_USER: peertube
+      POSTGRES_DB: peertube
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  redis:
+    # Job queue (transcoding, federation) and caches. Its snapshot on the volume keeps queued jobs across
+    # a restart; it isn't backed up.
+    image: redis:8-alpine
+    expose: ["6379"]
+    mem_reservation: 128m
+    mem_limit: 512m
+    volumes:
+      - redis-data:/data
+
+volumes:
+  peertube-data: {}
+  peertube-config: {}
+  db: {}
+  redis-data: {}

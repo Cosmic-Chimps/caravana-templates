@@ -13,6 +13,7 @@ database with its admin page) from New app › **From a template** by answering 
 | `umbral` | An OpenID Connect provider that signs people in without passwords |
 | `frunchy` | Your Crunchyroll watch history as statistics you can share (signs in through Umbral) |
 | `continuwuity` | A Matrix homeserver: your own chat server, federated with every other one |
+| `peertube` | Video hosting on your own domain, federated, with the videos in an S3-compatible bucket (R2) |
 | `codemagic-patch` | Over-the-air updates for React Native and Capacitor apps |
 
 ## What a template is

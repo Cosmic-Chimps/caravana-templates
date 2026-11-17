@@ -1,0 +1,55 @@
+{
+  "name": "peertube",
+  "title": "PeerTube",
+  "version": "8.3.2-1",
+  "description": "Video hosting on your own domain, federated with the fediverse, with the videos in an S3-compatible bucket (R2).",
+  "tags": ["video", "fediverse", "federation"],
+  "upstream": "https://joinpeertube.org",
+  "appName": "peertube",
+  "notes": "https://{{domain}} is permanent: every video and account address is tied to it. Buckets: {{bucket}} must be public at {{files_url}} (on R2, a custom domain or r2.dev) with a CORS rule that allows GET and HEAD from https://{{domain}}, or the player can't load videos; {{private_bucket}} must never be public. First sign-in: at its first start PeerTube makes the account root and writes its password once to its log. Open the app's Logs, search for \"User password\", sign in at https://{{domain}}/login as root, and change the password in My account, Settings. Sign-ups are closed and no email is set up: to send email, add PEERTUBE_SMTP_HOSTNAME, PEERTUBE_SMTP_PORT and PEERTUBE_SMTP_USERNAME to the peertube service's environment (Configure, Compose) and PEERTUBE_SMTP_PASSWORD as its secret, then open sign-ups in Administration if you want them. Transcoding uses up to 3 GB of memory; on a small server, move it to a remote runner on another machine (Administration, Remote runners). Backups: Postgres and PeerTube's volumes (thumbnails, avatars, plugins, settings) every day at 03:00 UTC, keeping 14; PeerTube stops for a few seconds during its backup. The videos are in the bucket, which Caravana doesn't back up. Redis holds only the job queue. Live streaming isn't set up: it needs the RTMP port, which a later version of this template adds.",
+  "inputs": [
+    {"name": "domain", "label": "Domain", "type": "domain",
+     "help": "Where PeerTube answers. Its DNS must point at this server. It can never change.", "example": "videos.example.com"},
+    {"name": "admin_email", "label": "Admin email", "type": "email",
+     "help": "The email of the root account.", "example": "you@example.com"},
+    {"name": "s3_endpoint", "label": "S3 endpoint", "type": "text",
+     "pattern": "https?://[a-z0-9]([a-z0-9.-]{0,200}[a-z0-9])?(:[0-9]{1,5})?",
+     "help": "Your bucket provider's S3 address. On R2: https://<account ID>.r2.cloudflarestorage.com",
+     "example": "https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com"},
+    {"name": "s3_region", "label": "S3 region", "type": "text", "pattern": "[a-z0-9-]{1,32}",
+     "default": "auto", "help": "auto on R2."},
+    {"name": "bucket", "label": "Videos bucket", "type": "text", "pattern": "[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]",
+     "default": "peertube", "help": "The public bucket for the videos, playlists and captions."},
+    {"name": "files_url", "label": "Videos bucket's public URL", "type": "text",
+     "pattern": "https://[a-z0-9]([a-z0-9.-]{0,200}[a-z0-9])?(:[0-9]{1,5})?(/[A-Za-z0-9._~-]+)*",
+     "help": "Where browsers read that bucket: its R2 custom domain or r2.dev address.",
+     "example": "https://videos-files.example.com"},
+    {"name": "private_bucket", "label": "Private bucket", "type": "text", "pattern": "[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]",
+     "default": "peertube-private", "help": "For users' exports and kept original files. It must never be public."},
+    {"name": "s3_access_key_id", "label": "S3 access key ID", "type": "secret",
+     "help": "From an R2 API token with Object Read & Write on both buckets.", "example": "example-access-key-id"},
+    {"name": "s3_secret_access_key", "label": "S3 secret access key", "type": "secret",
+     "help": "From the same API token.", "example": "example-secret-access-key"}
+  ],
+  "generated": [
+    {"name": "db_password", "length": 32, "alphabet": "alnum"},
+    {"name": "peertube_secret", "length": 64, "alphabet": "hex"}
+  ],
+  "services": {
+    "peertube": {
+      "domains": [{"host": "{{domain}}", "port": 9000}],
+      "health": {"path": "/api/v1/ping"},
+      "secrets": [
+        {"name": "PEERTUBE_SECRET", "value": "{{peertube_secret}}"},
+        {"name": "PEERTUBE_DB_PASSWORD", "value": "{{db_password}}"},
+        {"name": "PEERTUBE_OBJECT_STORAGE_CREDENTIALS_ACCESS_KEY_ID", "value": "{{s3_access_key_id}}"},
+        {"name": "PEERTUBE_OBJECT_STORAGE_CREDENTIALS_SECRET_ACCESS_KEY", "value": "{{s3_secret_access_key}}"}
+      ],
+      "backup": {"engine": "volume", "keep": 14}
+    },
+    "postgres": {
+      "secrets": [{"name": "POSTGRES_PASSWORD", "value": "{{db_password}}"}],
+      "backup": {"engine": "postgres", "keep": 14}
+    }
+  }
+}
