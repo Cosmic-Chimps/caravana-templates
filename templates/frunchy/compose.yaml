@@ -1,0 +1,35 @@
+# Frunchy (https://github.com/jjchiw/frunchy): your anime watch history in numbers, from a browser
+# extension's sync of your Crunchyroll history. Two services: Frunchy, and Postgres 18 on a volume. Every
+# secret (the database password, the data-protection key, the sign-in client's secret) is in the services'
+# secrets (see template.json); no secret is in this file. Without federation (Megafono): a plain web app.
+# 10.99.0.1 is Traefik's address on a Caravana host: Frunchy believes X-Forwarded-* from it only.
+services:
+  frunchy:
+    image: ghcr.io/jjchiw/frunchy:0.10.0
+    expose: ["8080"]
+    mem_reservation: 256m
+    mem_limit: 768m
+    environment:
+      Frunchy__TrustedProxies: 10.99.0.1
+      # Sign-in through Umbral, the only provider this template sets up (Frunchy keeps no passwords).
+      Frunchy__Auth__Providers__Umbral__Enabled: "true"
+      Frunchy__Auth__Providers__Umbral__Authority: "https://{{umbral_domain}}"
+      Frunchy__Auth__Providers__Umbral__ClientId: "{{umbral_client_id}}"
+      # MyAnimeList enrichment (studios, genres, seasons) is off until Frunchy__Mal__ClientId is set
+      # on the app's Variables page (the template's notes say so).
+    # No depends_on: services start together, and Frunchy waits up to 60 s for Postgres by itself
+    # (Frunchy:Database:StartupWaitSeconds); Nomad restarts it if Postgres takes longer.
+
+  postgres:
+    image: postgres:18-alpine
+    expose: ["5432"]
+    mem_reservation: 256m
+    mem_limit: 512m
+    environment:
+      POSTGRES_DB: frunchydb
+      POSTGRES_USER: frunchy
+    volumes:
+      - frunchy-pg:/var/lib/postgresql # Postgres 18's layout: the data is in a versioned folder under here
+
+volumes:
+  frunchy-pg: {}

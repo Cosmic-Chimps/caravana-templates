@@ -11,6 +11,7 @@ database with its admin page) from New app › **From a template** by answering 
 | `postgres` | PostgreSQL 17 on a volume, backed up daily, with Adminer to look into it |
 | `adminer` | A web page to browse and edit a database, behind a user name and password |
 | `umbral` | An OpenID Connect provider that signs people in without passwords |
+| `frunchy` | Your Crunchyroll watch history as statistics you can share (signs in through Umbral) |
 | `continuwuity` | A Matrix homeserver: your own chat server, federated with every other one |
 | `codemagic-patch` | Over-the-air updates for React Native and Capacitor apps |
 

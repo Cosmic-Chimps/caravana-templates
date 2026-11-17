@@ -1,0 +1,40 @@
+{
+  "name": "frunchy",
+  "title": "Frunchy",
+  "version": "0.10.0-1",
+  "description": "Your anime identity in numbers: Frunchy turns your Crunchyroll watch history into statistics you can share.",
+  "tags": ["anime", "statistics"],
+  "upstream": "https://github.com/jjchiw/frunchy",
+  "appName": "frunchy",
+  "notes": "Frunchy signs people in through Umbral, so install Umbral first (its own template), claim it, and in Umbral's admin create a web application with the redirect URI https://{{domain}}/signin-umbral: its client ID and secret are what you typed here. First account: on its first start Frunchy writes a one-time setup invite to its log; open the app's Logs, find the line \"Invite\", then sign in at https://{{domain}}/signin with Umbral and paste it. That account is an operator; to make it the root operator (who can open sign-ups), set Frunchy__RootOperator to its username on the Variables page. Sign-up is by invite until then. For studios, genres and seasons, add Frunchy__Mal__ClientId (a client ID from myanimelist.net/apiconfig) on the Variables page. Then install the Frunchy browser extension and connect it with the sync key from your account page. Postgres is backed up every day at 03:00 UTC, keeping 14. The data-protection key Caravana made is kept as a secret: losing it only signs everyone out.",
+  "inputs": [
+    {"name": "domain", "label": "Domain", "type": "domain",
+     "help": "Its DNS must point at this server. Your profile pages live here.", "example": "frunchy.example.com"},
+    {"name": "umbral_domain", "label": "Umbral's domain", "type": "domain",
+     "help": "The Umbral that signs people in (install it from its template first).", "example": "auth.example.com"},
+    {"name": "umbral_client_id", "label": "Umbral client ID", "type": "text",
+     "pattern": "[A-Za-z0-9._-]{8,128}",
+     "help": "From the web application you created in Umbral's admin.", "example": "yRQLCRnrR8-VhNHn"},
+    {"name": "umbral_client_secret", "label": "Umbral client secret", "type": "secret",
+     "help": "Shown once when you created the application in Umbral.", "example": "example-umbral-client-secret"}
+  ],
+  "generated": [
+    {"name": "db_password", "length": 32, "alphabet": "alnum"},
+    {"name": "data_protection_key", "length": 43, "alphabet": "hex"}
+  ],
+  "services": {
+    "frunchy": {
+      "domains": [{"host": "{{domain}}", "port": 8080}],
+      "health": {"path": "/healthz"},
+      "secrets": [
+        {"name": "ConnectionStrings__Database", "value": "Host=postgres;Database=frunchydb;Username=frunchy;Password={{db_password}}"},
+        {"name": "Frunchy__DataProtection__EncryptionKey", "value": "{{data_protection_key}}="},
+        {"name": "Frunchy__Auth__Providers__Umbral__ClientSecret", "value": "{{umbral_client_secret}}"}
+      ]
+    },
+    "postgres": {
+      "secrets": [{"name": "POSTGRES_PASSWORD", "value": "{{db_password}}"}],
+      "backup": {"engine": "postgres", "keep": 14}
+    }
+  }
+}
