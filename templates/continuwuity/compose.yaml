@@ -1,0 +1,29 @@
+# Continuwuity (https://continuwuity.org): a Matrix homeserver in one container, with an embedded
+# RocksDB database, so no Postgres. Everything it keeps is in /var/lib/continuwuity, on the volume.
+# The image's own command starts the server. Federation and clients both reach it over HTTPS on 443
+# through Caravana's Traefik (Matrix's .well-known delegation, see the notes), so port 8448 isn't needed.
+# Traefik passes Matrix's encoded paths (%2F, %23) as they are: allowed by default since Traefik v3.6.7.
+services:
+  continuwuity:
+    image: ghcr.io/continuwuity/continuwuity:v26.9.4
+    expose: ["8008"]
+    # Joining large public rooms makes memory and CPU spike for a while.
+    mem_reservation: 512m
+    mem_limit: 2048m
+    environment:
+      # Permanent: it is the part after the colon in every user ID (@you:server_name). Changing it
+      # later means a new, empty server.
+      CONTINUWUITY_SERVER_NAME: "{{server_name}}"
+      CONTINUWUITY_DATABASE_PATH: /var/lib/continuwuity
+      CONTINUWUITY_ADDRESS: 0.0.0.0
+      CONTINUWUITY_PORT: "8008"
+      # Where it fetches other servers' signing keys when it can't reach them directly.
+      CONTINUWUITY_TRUSTED_SERVERS: '["matrix.org"]'
+      # Sign-ups stay closed: the first account uses the one-time token the server prints at its first
+      # start, and later accounts are made from the admin room.
+      CONTINUWUITY_ALLOW_REGISTRATION: "false"
+    volumes:
+      - continuwuity-data:/var/lib/continuwuity
+
+volumes:
+  continuwuity-data: {}

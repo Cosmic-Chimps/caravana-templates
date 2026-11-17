@@ -1,0 +1,25 @@
+{
+  "name": "continuwuity",
+  "title": "Continuwuity",
+  "version": "26.9.4-1",
+  "description": "A Matrix homeserver in one container, with its own database: your own chat server that federates with every other Matrix server.",
+  "tags": ["chat", "matrix", "federation"],
+  "upstream": "https://continuwuity.org",
+  "appName": "matrix",
+  "notes": "Your Matrix IDs end in :{{server_name}}, for good: that name can't change later. The server answers at https://{{domain}}. If {{server_name}} isn't {{domain}}, the site at https://{{server_name}} must serve two files so other servers and apps find this one: /.well-known/matrix/server with {\"m.server\": \"{{domain}}:443\"}, and /.well-known/matrix/client with {\"m.homeserver\": {\"base_url\": \"https://{{domain}}\"}}, both as application/json, the client one also with Access-Control-Allow-Origin: *. First account: on its first start the server writes a one-time registration token to its log; open the app's Logs, find the line that says \"using the registration token\", then register in a Matrix client (Element, Cinny) against https://{{domain}} with that token. Nobody else can sign up: more accounts are made from the admin room. Check federation at https://federationtester.matrix.org with {{server_name}}. Everything it keeps is on one volume, which Caravana backs up every day at 03:00 UTC (the server stops for a few seconds). Voice and video calls aren't set up: they need a TURN server.",
+  "inputs": [
+    {"name": "domain", "label": "Domain", "type": "domain",
+     "help": "Where the server answers. Its DNS must point at this server.", "example": "matrix.example.com"},
+    {"name": "server_name", "label": "Server name", "type": "text",
+     "pattern": "[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+",
+     "help": "The part after the colon in your Matrix IDs (@you:example.com). Usually your bare domain. It can never change.",
+     "example": "example.com"}
+  ],
+  "services": {
+    "continuwuity": {
+      "domains": [{"host": "{{domain}}", "port": 8008}],
+      "health": {"path": "/_matrix/client/versions"},
+      "backup": {"engine": "volume"}
+    }
+  }
+}
