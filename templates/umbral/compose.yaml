@@ -4,7 +4,7 @@
 # 10.99.0.1 is Traefik's address on a Caravana host: Umbral believes X-Forwarded-* from it only.
 services:
   umbral:
-    image: ghcr.io/cosmic-chimps/umbral:0.10.0
+    image: ghcr.io/cosmic-chimps/umbral:0.13.0
     expose: ["8080"]
     environment:
       UMBRAL__PUBLIC_ORIGIN: "https://{{domain}}"
