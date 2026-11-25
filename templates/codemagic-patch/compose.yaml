@@ -1,9 +1,9 @@
 # Codemagic Patch (https://patch.codemagic.io/docs/): over-the-air updates for React Native and
 # Capacitor apps. It is the upstream self-host stack without Caddy and Silo: Traefik serves the
-# API and dashboard, and apps download updates from two Cloudflare R2 buckets (one public, behind
-# its own domain, and one private for the server's own files). Two services: the Patch server, and
-# Postgres on a volume. Upstream publishes no server image: build yours and give its address (the
-# notes say how). No secret is in this file.
+# API and dashboard, and apps download updates from two S3-compatible buckets (Cloudflare R2 or
+# Google Cloud Storage: one public, one private for the server's own files). Two services: the
+# Patch server, and Postgres on a volume. Sign-in is through GitHub. Upstream publishes no
+# server image: build yours and give its address (the notes say how). No secret is in this file.
 services:
   server:
     image: "{{image}}"
@@ -17,12 +17,12 @@ services:
       RUN_MIGRATIONS: "true"
       LOGGER: "true"
       SERVER_URL: "https://{{domain}}"
-      PUBLIC_BASE_URL: "https://{{files_domain}}"
+      PUBLIC_BASE_URL: "{{public_url}}"
       STORAGE_ADAPTER: s3
       S3_BUCKET: "{{bucket}}"
       S3_INTERNAL_BUCKET: "{{internal_bucket}}"
-      S3_REGION: auto
-      S3_ENDPOINT: "https://{{r2_account_id}}.r2.cloudflarestorage.com"
+      S3_REGION: "{{s3_region}}"
+      S3_ENDPOINT: "{{s3_endpoint}}"
       S3_FORCE_PATH_STYLE: "true"
       DELIVERY_ADAPTER: base-url
       GITHUB_OAUTH_CLIENT_ID: "{{oauth_client_id}}"
