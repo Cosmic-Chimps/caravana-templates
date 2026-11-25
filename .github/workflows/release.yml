@@ -14,7 +14,7 @@ permissions:
 env:
   # As in ci.yml: the Caravana release whose `template` command checks and bundles the catalog.
   # The first release with catalog format 2 (feature 058): older ones can't read the templates.
-  CARAVANA_REF: v0.24.0
+  CARAVANA_REF: v0.23.0
 
 jobs:
   release:
