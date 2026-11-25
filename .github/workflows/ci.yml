@@ -13,7 +13,7 @@ permissions:
 env:
   # The Caravana release whose translators check the templates (`template check`, since v0.21.0;
   # catalog format 2 since v0.23.0). Raise it when a template needs a newer Caravana.
-  CARAVANA_REF: v0.23.0
+  CARAVANA_REF: v0.24.0
 
 jobs:
   check:
