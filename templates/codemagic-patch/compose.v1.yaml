@@ -1,0 +1,45 @@
+# Codemagic Patch (https://patch.codemagic.io/docs/): over-the-air updates for React Native and
+# Capacitor apps. It is the upstream self-host stack without Caddy and Silo: Traefik serves the
+# API and dashboard, and apps download updates from two S3-compatible buckets (Cloudflare R2 or
+# Google Cloud Storage: one public, one private for the server's own files). Two services: the
+# Patch server, and Postgres on a volume. Sign-in is through GitHub. Upstream publishes no
+# server image: build yours and give its address (the notes say how). No secret is in this file.
+services:
+  server:
+    image: "{{image}}"
+    expose: ["3000"]
+    mem_reservation: 512m
+    mem_limit: 1024m
+    environment:
+      MODE: all # API and release worker in one process
+      HOST: 0.0.0.0
+      PORT: "3000"
+      RUN_MIGRATIONS: "true"
+      LOGGER: "true"
+      SERVER_URL: "https://{{domain}}"
+      PUBLIC_BASE_URL: "{{public_url}}"
+      STORAGE_ADAPTER: s3
+      S3_BUCKET: "{{bucket}}"
+      S3_INTERNAL_BUCKET: "{{internal_bucket}}"
+      S3_REGION: "{{s3_region}}"
+      S3_ENDPOINT: "{{s3_endpoint}}"
+      S3_FORCE_PATH_STYLE: "true"
+      DELIVERY_ADAPTER: base-url
+      GITHUB_OAUTH_CLIENT_ID: "{{oauth_client_id}}"
+      INITIAL_ADMIN_EMAILS: "{{admin_email}}"
+      REGISTRATION_MODE: invite_only
+      SERVER_TELEMETRY: "false"
+      SERVER_UPDATE_CHECK: "true"
+
+  postgres:
+    image: postgres:16
+    expose: ["5432"]
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: patch
+      POSTGRES_DB: patch
+    volumes:
+      - db:/var/lib/postgresql/data
+
+volumes:
+  db: {}

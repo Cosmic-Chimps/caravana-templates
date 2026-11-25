@@ -2,7 +2,7 @@
 # Capacitor apps. It is the upstream self-host stack without Caddy and Silo: Traefik serves the
 # API and dashboard, and apps download updates from two S3-compatible buckets (Cloudflare R2 or
 # Google Cloud Storage: one public, one private for the server's own files). Two services: the
-# Patch server, and Postgres on a volume. Sign-in is through GitHub. Upstream publishes no
+# Patch server, and Postgres on a volume. Sign-in is through GitHub, Bitbucket Cloud or GitLab: only the chosen one's lines are kept. Upstream publishes no
 # server image: build yours and give its address (the notes say how). No secret is in this file.
 services:
   server:
@@ -25,7 +25,11 @@ services:
       S3_ENDPOINT: "{{s3_endpoint}}"
       S3_FORCE_PATH_STYLE: "true"
       DELIVERY_ADAPTER: base-url
-      GITHUB_OAUTH_CLIENT_ID: "{{oauth_client_id}}"
+      GITHUB_OAUTH_CLIENT_ID: "{{gh_client_id}}" # when signin=github
+      BITBUCKET_OAUTH_CLIENT_ID: "{{bb_client_id}}" # when signin=bitbucket
+      BITBUCKET_OAUTH_ALLOWED_REDIRECT_URIS: "https://{{domain}}/auth/callback" # when signin=bitbucket
+      GITLAB_OAUTH_CLIENT_ID: "{{gl_client_id}}" # when signin=gitlab
+      GITLAB_OAUTH_BASE_URL: "{{gl_base_url}}" # when gl_base_url
       INITIAL_ADMIN_EMAILS: "{{admin_email}}"
       REGISTRATION_MODE: invite_only
       SERVER_TELEMETRY: "false"

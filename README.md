@@ -14,34 +14,61 @@ database with its admin page) from New app › **From a template** by answering 
 | `frunchy` | Your Crunchyroll watch history as statistics you can share (signs in through Umbral) |
 | `continuwuity` | A Matrix homeserver: your own chat server, federated with every other one |
 | `peertube` | Video hosting on your own domain, federated, with the videos in an S3-compatible bucket (R2) |
-| `codemagic-patch` | Over-the-air updates for React Native and Capacitor apps, signing in with GitHub |
-| `codemagic-patch-bitbucket` | The same, signing in with Bitbucket Cloud |
+| `codemagic-patch` | Over-the-air updates for React Native and Capacitor apps, signing in with GitHub, Bitbucket Cloud or GitLab (you choose) |
 
 ## What a template is
 
 A folder with a manifest and a Compose file with `{{placeholders}}`:
 
 ```
-catalog.json                    {"format": 1, "version": "2026.11.12"}
-templates/<name>/template.json  the manifest
-templates/<name>/compose.yaml   the Compose file
-templates/<name>/logo.svg       optional
+catalog.json                       {"format": 2, "version": "2026.11.25"}
+templates/<name>/template.json     the manifest
+templates/<name>/compose.yaml      the Compose file
+templates/<name>/logo.svg          optional
+templates/<name>/template.v1.json  optional: a frozen format-1 variant (see "Two formats")
+templates/<name>/compose.v1.yaml   its Compose file
 ```
 
 - The **Compose file** says which images run and how they are wired. Images are pinned to a version
   (Caravana pins the digest at install). It may not use `depends_on`, a floating tag or anything
   Caravana can't honor: that is a warning, and a warning fails the check.
 - The **manifest** has the template's name, title, version, description, tags and upstream link; its
-  **inputs** (a `domain`, an `email`, a `text` with a pattern, a `secret`); its **generated secrets**
+  **inputs** (a `domain`, an `email`, a `text` with a pattern, a `secret`, or a `choice` between a few
+  answers; at most 20; any may be `"required": false`, and any may be asked only `"when"` an earlier choice
+  has a given answer); its **generated secrets**
   (a length and an alphabet; Caravana makes them at install and never shows them); and the **overlay**
   per service: domains, health check, secrets and backup, which Compose has no words for.
+- Content that only one answer needs is **conditional**: a single-line entry of the Compose file ends with a
+  marker comment (`GITHUB_OAUTH_CLIENT_ID: "{{gh_client_id}}" # when signin=github`, or `# when
+  signin=bitbucket,gitlab`, or `# when s3_region` for "when that input isn't empty"), and an item of the
+  overlay's `domains`, `secrets`, `identities` or `publish` may carry `"when": {"signin": "github"}`. What
+  doesn't hold is dropped, so nothing empty reaches the app. See `codemagic-patch`.
 - A `{{placeholder}}` is a plain substitution, once, with no logic. A plain input may go anywhere in the
   file or the overlay. A **secret** (a secret input or a generated one) may go only in a service's
   `secrets[].value`, so no password ever lands in the Compose file Caravana keeps and shows.
 
 The format is specified in
-[`specs/035-app-templates/contracts/template-format.md`](https://github.com/cosmic-chimps/caravana/blob/main/specs/035-app-templates/contracts/template-format.md)
-in Caravana's repository, field by field, with the limits.
+[`specs/058-template-inputs/contracts/template-format-2.md`](https://github.com/cosmic-chimps/caravana/blob/main/specs/058-template-inputs/contracts/template-format-2.md)
+(and, for what format 1 has, `specs/035-app-templates/contracts/template-format.md`) in Caravana's
+repository, field by field, with the limits.
+
+### Two formats
+
+Caravana up to 0.22 reads only `catalog.json` in **format 1** (at most 12 inputs; the types `domain`,
+`email`, `text`, `secret`; no `required`, `choices` or `when`) and refuses a whole catalog that holds one thing
+it doesn't know, which would stop its template list from updating. So a release publishes two bundles:
+
+- `catalog.v2.json`, format 2, every template as `template.json` and `compose.yaml` are written. Newer
+  Caravana reads this one (and falls back to `catalog.json` for a release that has none).
+- `catalog.json`, format 1, **for the older ones**: each template whose files already pass format 1's rules,
+  and, for one that needs format 2 (like `codemagic-patch`, with its choices), its **frozen variant**,
+  `template.v1.json` and `compose.v1.yaml`, copied from the last format-1 version. A folder that has only the
+  frozen files is a template older Caravanas still offer and newer ones don't (`codemagic-patch-bitbucket`:
+  `codemagic-patch` replaces it). A format-2 template with no frozen variant is simply not offered to the old.
+
+`caravana template bundle` makes both and says which templates are in one only; `caravana template check`
+checks both (a frozen variant too). Never edit a frozen variant to use format 2: that is what `template.json`
+is for.
 
 ## Adding one
 
@@ -49,7 +76,8 @@ in Caravana's repository, field by field, with the limits.
    template. Write it from the upstream project's own documentation, and run the image to learn its
    health path: pick one that answers 200 without signing in (not a redirect).
 2. Check it: `go run github.com/cosmic-chimps/caravana/cmd/caravana@main template check .` renders every
-   template with its example inputs through Caravana's own Compose and job translators.
+   template, for each combination of its choices (at most 64) and with each optional input empty and filled,
+   through Caravana's own Compose and job translators.
 3. Try it on a Caravana: `lab/install-all.sh <name>` (see below).
 4. Open a pull request. CI runs the same check.
 
@@ -82,9 +110,11 @@ has no backup destination yet.
 
 Tag a version (`git tag 2026.11.13 && git push origin 2026.11.13`; `2026.11.13.1` for a second one the
 same day). The release workflow bundles the catalog (`caravana template bundle --version <tag> . dist`) and
-uploads `catalog.json` and `SHA256SUMS` to a GitHub release. Caravana asks for the latest release once a
-day: it fetches `SHA256SUMS` first, `catalog.json` only when its sum changed, checks the sum and every
-template, and keeps the catalog if its version is newer than the one it has. Each Caravana release also
+uploads `catalog.v2.json`, `catalog.json` and `SHA256SUMS` (one line for each file) to a GitHub release.
+Caravana asks for the latest release once a day: it fetches `SHA256SUMS` first, then `catalog.v2.json` (or
+`catalog.json` when the release has no such line) only when its sum changed, checks the sum and every
+template, and keeps the catalog if its version is newer than the one it has. A template written for a newer
+Caravana than the one reading is listed as unavailable; the rest of the catalog is kept. Each Caravana release also
 embeds a copy, so a new installation works offline. The owner can turn the daily check off in New app ›
 From a template, and then Caravana makes no request.
 

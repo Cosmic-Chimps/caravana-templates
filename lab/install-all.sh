@@ -94,7 +94,7 @@ install_one() {
 
   # The example (or default) of every input; a domain gets a lab domain of its own.
   inputs="$(jq -c --arg app "$app" '
-    [.inputs[] | {key: .name, value: (if .type == "domain" and (.default // "") == "" then ($app + "." + ((.example // "x.localhost") | split(".") | .[1:] | join("."))) else (.default // .example // "") end)}]
+    [.inputs[] | {key: .name, value: (if .type == "domain" and (.default // "") == "" then ($app + "." + ((.example // "x.localhost") | split(".") | .[1:] | join("."))) else (.default // .example // .choices[0].value // "") end)}]
     | from_entries' <<<"$template")"
 
   backups=false

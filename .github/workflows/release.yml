@@ -1,7 +1,8 @@
 name: release
 
 # A tag (2026.11.12, or 2026.11.12.1 for a second one the same day) publishes the catalog: the
-# bundle Caravana fetches, catalog.json, and SHA256SUMS beside it. Caravana reads the latest
+# bundles Caravana fetches, catalog.v2.json (format 2) and catalog.json (format 1, which Caravana
+# 0.22 and older read and which must stay readable by them), and SHA256SUMS beside them. Caravana reads the latest
 # release's files, once a day, and keeps the catalog only when its version is newer than the one it has.
 on:
   push:
@@ -12,7 +13,8 @@ permissions:
 
 env:
   # As in ci.yml: the Caravana release whose `template` command checks and bundles the catalog.
-  CARAVANA_REF: v0.21.0
+  # The first release with catalog format 2 (feature 058): older ones can't read the templates.
+  CARAVANA_REF: v0.23.0
 
 jobs:
   release:
@@ -31,6 +33,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" dist/catalog.json dist/SHA256SUMS \
+          gh release create "${GITHUB_REF_NAME}" dist/catalog.v2.json dist/catalog.json dist/SHA256SUMS \
             --title "Catalog ${GITHUB_REF_NAME}" \
-            --notes "The template catalog ${GITHUB_REF_NAME}: catalog.json and its SHA256SUMS."
+            --notes "The template catalog ${GITHUB_REF_NAME}: catalog.v2.json (format 2), catalog.json (format 1, for Caravana 0.22 and older) and their SHA256SUMS."
