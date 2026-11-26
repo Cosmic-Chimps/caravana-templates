@@ -20,6 +20,7 @@ services:
         hard: 65536
     volumes:
       - indexer-data:/var/lib/wazuh-indexer
+      - indexer-snapshots:/var/lib/wazuh-indexer-snapshots
     configs:
       - source: indexer
         target: /usr/share/wazuh-indexer/config/opensearch.yml
@@ -85,6 +86,7 @@ configs:
       cluster.name: "wazuh-cluster"
       path.data: /var/lib/wazuh-indexer
       path.logs: /var/log/wazuh-indexer
+      path.repo: /var/lib/wazuh-indexer-snapshots
       discovery.type: single-node
       compatibility.override_main_response_version: true
       plugins.security.ssl.http.pemcert_filepath: /usr/share/wazuh-indexer/config/certs/wazuh.indexer.pem
@@ -448,6 +450,7 @@ configs:
 
 volumes:
   indexer-data: {}
+  indexer-snapshots: {}
   manager-api-configuration: {}
   manager-etc: {}
   manager-logs: {}

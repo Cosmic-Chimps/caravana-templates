@@ -11,7 +11,7 @@
   "appName": "wazuh",
   "requires": "0.24.0",
   "lab": false,
-  "notes": "Open https://{{domain}} and sign in as admin with the password you typed. Wazuh needs about 4 GB of memory for its three services. Agents connect to the manager on ports 1514 (events) and 1515 (enrollment): they are published on this server's address, so open them in your cloud provider's firewall, and point each agent at this server's IP or a DNS name for it (not the dashboard's domain, which goes through the HTTPS proxy). The indexer is OpenSearch: every Caravana server already has vm.max_map_count at 262144 or more, which it needs. The manager's volumes are backed up every day at 03:00 UTC, which stops the manager for a moment (agents reconnect on their own). The indexer isn't backed up: a volume backup would stop it, and its alerts come from the manager; use OpenSearch snapshots if you need them kept. The certificates are made at install and are valid for ten years; the certificate authority's key isn't kept, so they can't be reissued without installing the app again.",
+  "notes": "Open https://{{domain}} and sign in as admin with the password you typed. Wazuh needs about 4 GB of memory for its three services. Agents connect to the manager on ports 1514 (events) and 1515 (enrollment): they are published on this server's address, so open them in your cloud provider's firewall, and point each agent at this server's IP or a DNS name for it (not the dashboard's domain, which goes through the HTTPS proxy). The indexer is OpenSearch: every Caravana server already has vm.max_map_count at 262144 or more, which it needs. Backups run every day at 03:00 UTC: the indexer takes an OpenSearch snapshot of its indices while it runs, and the manager's volumes are archived, which stops the manager for a moment (agents reconnect on their own). A snapshot needs free disk about the size of the indices while it is uploaded. The certificates are made at install and are valid for ten years; the certificate authority's key isn't kept, so they can't be reissued without installing the app again.",
   "inputs": [
     {
       "name": "domain",
@@ -173,6 +173,10 @@
           "value": "{{admin_key}}"
         },
         {
+          "name": "OPENSEARCH_INITIAL_ADMIN_PASSWORD",
+          "value": "{{admin_password}}"
+        },
+        {
           "name": "INTERNAL_USERS",
           "value": "---\n# The indexer's internal users: only the two Wazuh needs, with passwords made at install.\n# Wazuh's demo users (kibanaro, logstash, readall, snapshotrestore) are left out on purpose.\n_meta:\n  type: \"internalusers\"\n  config_version: 2\n\nadmin:\n  hash: \"{{admin_password|bcrypt}}\"\n  reserved: true\n  backend_roles:\n  - \"admin\"\n  description: \"Admin user\"\n\nkibanaserver:\n  hash: \"{{dashboard_password|bcrypt}}\"\n  reserved: true\n  description: \"The dashboard's user\"\n"
         }
@@ -214,7 +218,12 @@
           "uid": 1000,
           "gid": 1000
         }
-      ]
+      ],
+      "backup": {
+        "engine": "opensearch",
+        "repository": "/var/lib/wazuh-indexer-snapshots",
+        "keep": 7
+      }
     },
     "manager": {
       "publish": [
