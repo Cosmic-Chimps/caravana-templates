@@ -1,0 +1,323 @@
+{
+  "name": "wazuh",
+  "title": "Wazuh",
+  "version": "4.14.11-1",
+  "description": "A security platform: agents on your machines send events, Wazuh finds threats and shows them on a dashboard.",
+  "tags": [
+    "security",
+    "monitoring"
+  ],
+  "upstream": "https://github.com/wazuh/wazuh-docker",
+  "appName": "wazuh",
+  "requires": "0.24.0",
+  "lab": false,
+  "notes": "Open https://{{domain}} and sign in as admin with the password you typed. Wazuh needs about 4 GB of memory for its three services. Agents connect to the manager on ports 1514 (events) and 1515 (enrollment): they are published on this server's address, so open them in your cloud provider's firewall, and point each agent at this server's IP or a DNS name for it (not the dashboard's domain, which goes through the HTTPS proxy). The indexer is OpenSearch: every Caravana server already has vm.max_map_count at 262144 or more, which it needs. The manager's volumes are backed up every day at 03:00 UTC, which stops the manager for a moment (agents reconnect on their own). The indexer isn't backed up: a volume backup would stop it, and its alerts come from the manager; use OpenSearch snapshots if you need them kept.",
+  "inputs": [
+    {
+      "name": "domain",
+      "label": "Dashboard domain",
+      "type": "domain",
+      "help": "Its DNS must point at this server.",
+      "example": "wazuh.example.com"
+    },
+    {
+      "name": "admin_password",
+      "label": "Admin password",
+      "type": "secret",
+      "help": "The password of the dashboard's admin user (also the manager's indexer login). Keep a note of it: Caravana never shows it again.",
+      "example": "a-long-passphrase-of-your-own"
+    }
+  ],
+  "generated": [
+    {
+      "name": "dashboard_password",
+      "length": 32,
+      "alphabet": "alnum"
+    },
+    {
+      "name": "api_password",
+      "length": 28,
+      "alphabet": "alnum"
+    }
+  ],
+  "certificates": {
+    "ca": {
+      "subject": [
+        {
+          "type": "CN",
+          "value": "Wazuh root CA"
+        },
+        {
+          "type": "OU",
+          "value": "Wazuh"
+        },
+        {
+          "type": "O",
+          "value": "Wazuh"
+        },
+        {
+          "type": "L",
+          "value": "California"
+        },
+        {
+          "type": "C",
+          "value": "US"
+        }
+      ]
+    },
+    "leaves": [
+      {
+        "name": "indexer",
+        "subject": [
+          {
+            "type": "CN",
+            "value": "indexer"
+          },
+          {
+            "type": "OU",
+            "value": "Wazuh"
+          },
+          {
+            "type": "O",
+            "value": "Wazuh"
+          },
+          {
+            "type": "L",
+            "value": "California"
+          },
+          {
+            "type": "C",
+            "value": "US"
+          }
+        ],
+        "dnsNames": [
+          "indexer"
+        ]
+      },
+      {
+        "name": "admin",
+        "subject": [
+          {
+            "type": "CN",
+            "value": "admin"
+          },
+          {
+            "type": "OU",
+            "value": "Wazuh"
+          },
+          {
+            "type": "O",
+            "value": "Wazuh"
+          },
+          {
+            "type": "L",
+            "value": "California"
+          },
+          {
+            "type": "C",
+            "value": "US"
+          }
+        ]
+      },
+      {
+        "name": "manager",
+        "subject": [
+          {
+            "type": "CN",
+            "value": "manager"
+          },
+          {
+            "type": "OU",
+            "value": "Wazuh"
+          },
+          {
+            "type": "O",
+            "value": "Wazuh"
+          },
+          {
+            "type": "L",
+            "value": "California"
+          },
+          {
+            "type": "C",
+            "value": "US"
+          }
+        ],
+        "dnsNames": [
+          "manager"
+        ]
+      }
+    ]
+  },
+  "services": {
+    "indexer": {
+      "secrets": [
+        {
+          "name": "CA_CERT",
+          "value": "{{ca_cert}}"
+        },
+        {
+          "name": "INDEXER_CERT",
+          "value": "{{indexer_cert}}"
+        },
+        {
+          "name": "INDEXER_KEY",
+          "value": "{{indexer_key}}"
+        },
+        {
+          "name": "ADMIN_CERT",
+          "value": "{{admin_cert}}"
+        },
+        {
+          "name": "ADMIN_KEY",
+          "value": "{{admin_key}}"
+        },
+        {
+          "name": "INTERNAL_USERS",
+          "value": "---\n# The indexer's internal users: only the two Wazuh needs, with passwords made at install.\n# Wazuh's demo users (kibanaro, logstash, readall, snapshotrestore) are left out on purpose.\n_meta:\n  type: \"internalusers\"\n  config_version: 2\n\nadmin:\n  hash: \"{{admin_password|bcrypt}}\"\n  reserved: true\n  backend_roles:\n  - \"admin\"\n  description: \"Admin user\"\n\nkibanaserver:\n  hash: \"{{dashboard_password|bcrypt}}\"\n  reserved: true\n  description: \"The dashboard's user\"\n"
+        }
+      ],
+      "files": [
+        {
+          "path": "/usr/share/wazuh-indexer/config/certs/root-ca.pem",
+          "secret": "CA_CERT",
+          "mode": "0444"
+        },
+        {
+          "path": "/usr/share/wazuh-indexer/config/certs/wazuh.indexer.pem",
+          "secret": "INDEXER_CERT",
+          "mode": "0444"
+        },
+        {
+          "path": "/usr/share/wazuh-indexer/config/certs/wazuh.indexer.key",
+          "secret": "INDEXER_KEY",
+          "mode": "0400",
+          "uid": 1000,
+          "gid": 1000
+        },
+        {
+          "path": "/usr/share/wazuh-indexer/config/certs/admin.pem",
+          "secret": "ADMIN_CERT",
+          "mode": "0444"
+        },
+        {
+          "path": "/usr/share/wazuh-indexer/config/certs/admin-key.pem",
+          "secret": "ADMIN_KEY",
+          "mode": "0400",
+          "uid": 1000,
+          "gid": 1000
+        },
+        {
+          "path": "/usr/share/wazuh-indexer/config/opensearch-security/internal_users.yml",
+          "secret": "INTERNAL_USERS",
+          "mode": "0400",
+          "uid": 1000,
+          "gid": 1000
+        }
+      ]
+    },
+    "manager": {
+      "publish": [
+        {
+          "port": 1514
+        },
+        {
+          "port": 1515
+        }
+      ],
+      "secrets": [
+        {
+          "name": "INDEXER_PASSWORD",
+          "value": "{{admin_password}}"
+        },
+        {
+          "name": "API_PASSWORD",
+          "value": "{{api_password}}.Wz1"
+        },
+        {
+          "name": "CA_CERT",
+          "value": "{{ca_cert}}"
+        },
+        {
+          "name": "MANAGER_CERT",
+          "value": "{{manager_cert}}"
+        },
+        {
+          "name": "MANAGER_KEY",
+          "value": "{{manager_key}}"
+        }
+      ],
+      "files": [
+        {
+          "path": "/etc/ssl/root-ca.pem",
+          "secret": "CA_CERT",
+          "mode": "0444"
+        },
+        {
+          "path": "/etc/ssl/filebeat.pem",
+          "secret": "MANAGER_CERT",
+          "mode": "0444"
+        },
+        {
+          "path": "/etc/ssl/filebeat.key",
+          "secret": "MANAGER_KEY",
+          "mode": "0400"
+        }
+      ],
+      "backup": {
+        "engine": "volume",
+        "keep": 7
+      },
+      "health": {
+        "port": 55000
+      }
+    },
+    "dashboard": {
+      "domains": [
+        {
+          "host": "{{domain}}",
+          "port": 5601
+        }
+      ],
+      "health": {
+        "path": "/app/login"
+      },
+      "secrets": [
+        {
+          "name": "INDEXER_PASSWORD",
+          "value": "{{admin_password}}"
+        },
+        {
+          "name": "DASHBOARD_PASSWORD",
+          "value": "{{dashboard_password}}"
+        },
+        {
+          "name": "API_PASSWORD",
+          "value": "{{api_password}}.Wz1"
+        },
+        {
+          "name": "CA_CERT",
+          "value": "{{ca_cert}}"
+        },
+        {
+          "name": "WAZUH_YML",
+          "value": "hosts:\n  - default:\n      url: \"https://manager\"\n      port: 55000\n      username: wazuh-wui\n      password: \"{{api_password}}.Wz1\"\n      run_as: true\n"
+        }
+      ],
+      "files": [
+        {
+          "path": "/usr/share/wazuh-dashboard/certs/root-ca.pem",
+          "secret": "CA_CERT",
+          "mode": "0444"
+        },
+        {
+          "path": "/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml",
+          "secret": "WAZUH_YML",
+          "mode": "0400",
+          "uid": 1000,
+          "gid": 1000
+        }
+      ]
+    }
+  }
+}

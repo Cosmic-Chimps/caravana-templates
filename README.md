@@ -14,6 +14,7 @@ database with its admin page) from New app › **From a template** by answering 
 | `frunchy` | Your Crunchyroll watch history as statistics you can share (signs in through Umbral) |
 | `continuwuity` | A Matrix homeserver: your own chat server, federated with every other one |
 | `peertube` | Video hosting on your own domain, federated, with the videos in an S3-compatible bucket (R2) |
+| `wazuh` | A security platform: agents send events, Wazuh finds threats and shows them on a dashboard (indexer, manager and dashboard; about 4 GB) |
 | `codemagic-patch` | Over-the-air updates for React Native and Capacitor apps, signing in with GitHub, Bitbucket Cloud or GitLab (you choose) |
 
 ## What a template is
@@ -46,9 +47,16 @@ templates/<name>/compose.v1.yaml   its Compose file
 - A `{{placeholder}}` is a plain substitution, once, with no logic. A plain input may go anywhere in the
   file or the overlay. A **secret** (a secret input or a generated one) may go only in a service's
   `secrets[].value`, so no password ever lands in the Compose file Caravana keeps and shows.
+- A template may ask Caravana to make **certificates** at install (`"certificates"`: one certificate
+  authority and the certificates it signs, RSA 2048, ten years; the authority's key is thrown away). They
+  make the secret names `ca_cert`, `<leaf>_cert` and `<leaf>_key`, usable like a generated secret. The
+  filter `{{admin_password|bcrypt}}` writes the bcrypt hash of a secret, for services that keep hashes
+  (OpenSearch's internal users). A template that uses either needs a Caravana that has them, so it sets
+  `"requires"` and is listed as unavailable to an older one. See `wazuh`.
 
 The format is specified in
 [`specs/058-template-inputs/contracts/template-format-2.md`](https://github.com/cosmic-chimps/caravana/blob/main/specs/058-template-inputs/contracts/template-format-2.md)
+(certificates and the bcrypt filter: [`specs/060-opensearch-apps/contracts/template-format-060.md`](https://github.com/cosmic-chimps/caravana/blob/main/specs/060-opensearch-apps/contracts/template-format-060.md))
 (and, for what format 1 has, `specs/035-app-templates/contracts/template-format.md`) in Caravana's
 repository, field by field, with the limits.
 
