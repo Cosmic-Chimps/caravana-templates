@@ -9,7 +9,7 @@
   ],
   "upstream": "https://github.com/wazuh/wazuh-docker",
   "appName": "wazuh",
-  "requires": "0.24.0",
+  "requires": "0.23.3",
   "lab": false,
   "notes": "Open https://{{domain}} and sign in as admin with the password you typed. Wazuh needs about 4 GB of memory for its three services. Agents connect to the manager on ports 1514 (events) and 1515 (enrollment): they are published on this server's address, so open them in your cloud provider's firewall, and point each agent at this server's IP or a DNS name for it (not the dashboard's domain, which goes through the HTTPS proxy). The indexer is OpenSearch: every Caravana server already has vm.max_map_count at 262144 or more, which it needs. Backups run every day at 03:00 UTC: the indexer takes an OpenSearch snapshot of its indices while it runs, and the manager's volumes are archived, which stops the manager for a moment (agents reconnect on their own). A snapshot needs free disk about the size of the indices while it is uploaded. The certificates are made at install and are valid for ten years; the certificate authority's key isn't kept, so they can't be reissued without installing the app again.",
   "inputs": [
