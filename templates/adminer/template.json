@@ -6,7 +6,7 @@
   "tags": ["database", "admin"],
   "upstream": "https://www.adminer.org/",
   "appName": "adminer",
-  "notes": "Adminer is at https://{{domain}}, behind Team only: its user name is team, and its password is shown once after Create. At its own login, give the address of a database this server can reach (a database inside another Caravana app is not reachable by name).",
+  "notes": "Adminer is at https://{{domain}}, behind Team only: its user name is team, and its password is shown once after Create. At its own login, give the address of a database this server can reach. A database app of the same project and environment answers by name: <app>-<service>, or just <app> when it is that app's only service with ports, and its installed notice shows the exact address (the PostgreSQL template installed as postgres is postgres-postgres, port 5432). That needs a Caravana whose installed notice lists addresses: on an older one a database inside another Caravana app is not reachable by name.",
   "inputs": [
     {"name": "domain", "label": "Domain", "type": "domain",
      "help": "Its DNS must point at this server.", "example": "adminer.example.com"}

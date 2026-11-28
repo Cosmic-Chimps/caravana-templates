@@ -6,7 +6,7 @@
   "tags": ["database", "backups"],
   "upstream": "https://www.postgresql.org/",
   "appName": "postgres",
-  "notes": "Adminer is at https://{{domain}}, behind Team only: its user name is team, and its password is shown once after Create. To log into the database from Adminer choose System PostgreSQL, Server postgres, Username app, Database app, and the password you typed. Other apps can't reach this database by name: services find each other only inside one app. To use it from your own services, add them to this app's Compose file (Configure, Compose). Backups run every day at 03:00 UTC.",
+  "notes": "Adminer is at https://{{domain}}, behind Team only: its user name is team, and its password is shown once after Create. To log into the database from Adminer choose System PostgreSQL, Server postgres, Username app, Database app, and the password you typed. Other apps of this project and environment reach the database at <app name>-postgres:5432, so postgres-postgres:5432 if you keep the app name postgres (Adminer has a port too, so the bare app name isn't claimed), with Username app and Database app; the installed notice shows the exact address. That needs a Caravana whose installed notice lists addresses: on an older one other apps can't reach it by name, so add your own services to this app's Compose file (Configure, Compose), where they reach it at postgres:5432. Backups run every day at 03:00 UTC.",
   "inputs": [
     {"name": "domain", "label": "Adminer domain", "type": "domain",
      "help": "Where Adminer is served. Its DNS must point at this server.", "example": "db.example.com"},
